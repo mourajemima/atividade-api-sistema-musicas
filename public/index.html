@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Música para DJ</title>
+</head>
+<body>
+    <h1>Sistema de Música para DJ</h1>
+
+    <h2>Registro</h2>
+    <form id="registroFormulario">
+        <input type="email" id="registroEmail" placeholder="Email" required>
+        <input type="password" id="registroPassword" placeholder="Senha" required>
+        <button type="submit">Registrar</button>
+    </form>
+
+    <h2>Login</h2>
+    <form id="loginFormulario">
+        <input type="email" id="loginEmail" placeholder="Email" required>
+        <input type="password" id="loginPassword" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+    </form>
+
+    <h2>Músicas</h2>
+    <button id="retornaMusicasBotao">Obter Músicas</button>
+    <ul id="musicasLista"></ul>
+
+    <script>
+        document.getElementById('registroFormulario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registroEmail').value;
+            const password = document.getElementById('registroPassword').value;
+
+            const response = await fetch('/registro', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, password})
+            });
+
+            if (response.ok) {
+                alert('Usuário registrado com sucesso!');
+                e.target.reset();
+            } else {
+                alert('Erro ao registrar usuário.');
+            }
+        });
+
+        document.getElementById('loginFormulario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, password})
+            });
+
+            const dados = await response.json();
+            if (response.ok) {
+                localStorage.setItem('token', dados.token);
+                alert('Login realizado com sucesso!');
+                e.target.reset();
+            } else {
+                alert('Login falhou: ' + dados.message);
+            }
+        });
+
+        document.getElementById('retornaMusicasBotao').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Por favor, primeiro faça o login na sua conta!');
+                return;
+            }
+
+            const response = await fetch('/musicas', {
+                headers: {Authorization: `Bearer ${token}`}
+            });
+
+            const musicas = await response.json();
+            if (response.ok) {
+                const musicasLista = document.getElementById('musicasLista');
+                musicasLista.innerHTML = '';
+                musicas.forEach(musica => {
+                    const li = document.createElement('li');
+                    li.textContent = `${musica.titulo} - ${musica.artista}`;
+                    musicasLista.appendChild(li);
+                });
+            } else {
+                alert('Erro ao buscar as músicas: ' + musicas.message);
+            }
+        });
+    </script>
+</body>
+</html>
